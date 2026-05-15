@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic e as Escadas - Projeto Didático</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="game-wrapper">
+        <!-- HUD de Interface (Sempre visível, mas só roda após start) -->
+        <div class="hud">
+            <div>Pontos: <span id="score" style="color: #f1c40f;">0</span></div>
+            <div>Tempo: <span id="time" style="color: #e74c3c;">30</span>s</div>
+        </div>
+
+        <div id="game-container">
+
+            <!-- O Sonic -->
+            <div id="sonic"></div>
+
+            <!-- Tela Inicial Overlay -->
+            <div id="start-screen" class="overlay">
+                <h2>Sonic e as Escadas</h2>
+                <div class="instructions-box">
+                    <h3>Regras e Instruções</h3>
+                    <p><strong>Regra de Subida:</strong> Só é possível subir um degrau da escada pulando quando você
+                        estiver na borda direita do degrau atual. Você não pode subir simplesmente correndo contra a
+                        parede.</p>
+                    <p><strong>Objetivo:</strong> Você tem 30 segundos para chegar ao topo!</p>
+                    <p><strong>Controles:</strong></p>
+                    <ul>
+                        <li><strong>Pulo/Subir:</strong> W, Seta para Cima ou Espaço</li>
+                        <li><strong>Andar para Direita:</strong> D ou Seta Direita</li>
+                        <li><strong>Andar para Esquerda:</strong> A ou Seta Esquerda</li>
+                    </ul>
+                </div>
+                <button id="btn-start" onclick="startGame()">Começar Jogo</button>
+            </div>
+
+            <!-- Tela de Fim de Jogo Overlay -->
+            <div id="end-screen" class="overlay" style="display: none;">
+                <h2 id="end-title"></h2>
+                <p id="end-message"></p>
+                <button onclick="resetToStart()" style="margin-top: 20px;">Jogar Novamente</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
