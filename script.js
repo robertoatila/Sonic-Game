@@ -5,6 +5,7 @@ let sonicY = 75;
 let jumpY = 0; // Altura relativa do pulo
 
 let currentStep = 0;
+let maxStepReached = 0;
 let score = 0;
 let timeLeft = 30;
 
@@ -52,6 +53,7 @@ function buildWorld() {
     sonicY = 75; // Altura do primeiro degrau
     jumpY = 0;
     currentStep = 0;
+    maxStepReached = 0;
     score = 0;
     timeLeft = 30;
     gameActive = false;
@@ -235,18 +237,45 @@ function handleMovement(timeScale) {
         if (keys['arrowright'] || keys['d'] || keys['KeyD']) {
             let stepMaxX = (currentStep * 150) + 150 - 40; 
             sonicX += 6 * timeScale; // Velocidade suave
-            if (sonicX > stepMaxX) sonicX = stepMaxX; 
+            if (sonicX > stepMaxX) {
+                if (isJumping && jumpY >= 60 && currentStep < 7) {
+                    currentStep++;
+                    sonicY += 75;
+                    jumpY -= 75;
+                    if (currentStep > maxStepReached) {
+                        score += 10;
+                        maxStepReached = currentStep;
+                        updateScore();
+                    }
+                } else {
+                    sonicX = stepMaxX; 
+                }
+            }
         }
         if (keys['arrowleft'] || keys['a'] || keys['KeyA']) {
             let stepMinX = currentStep * 150;
             sonicX -= 6 * timeScale;
-            if (sonicX < stepMinX) sonicX = stepMinX; 
+            if (sonicX < stepMinX) {
+                if (currentStep > 0) {
+                    currentStep--;
+                    sonicY -= 75;
+                    jumpY += 75;
+                    if (!isJumping) {
+                        isJumping = true;
+                        jumpVelocity = 0;
+                        sonicEl.style.backgroundImage = "url('jump.png')";
+                    }
+                } else {
+                    sonicX = stepMinX; 
+                }
+            }
         }
         
         // Inicialização de Pulo
         if ((keys['arrowup'] || keys['w'] || keys['space'] || keys['Space'] || keys['KeyW']) && !isJumping) {
             let stepMaxX = (currentStep * 150) + 150 - 40;
-            if (sonicX >= stepMaxX - 5) {
+            let isHoldingLeft = keys['arrowleft'] || keys['a'] || keys['KeyA'];
+            if (sonicX >= stepMaxX - 5 && !isHoldingLeft) {
                 // Inicia pulo longo (transição de degrau)
                 isClimbing = true;
                 climbProgress = 0;
@@ -295,8 +324,11 @@ function handleMovement(timeScale) {
             currentStep++;
             sonicX = targetX; 
             
-            score += 10; 
-            updateScore();
+            if (currentStep > maxStepReached) {
+                score += 10;
+                maxStepReached = currentStep;
+                updateScore();
+            }
             
             sonicEl.style.backgroundImage = "url('prota.jfif')";
             // A condição de vitória automática foi removida daqui, agora depende de pegar a moeda!

@@ -169,6 +169,11 @@ button {
     transition: transform 0.2s, background 0.2s;
 }
 
+.overlay button {
+    position: absolute;
+    bottom: 80px;
+}
+
 button:hover {
     background: #27ae60;
     transform: scale(1.05);
