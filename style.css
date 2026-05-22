@@ -74,14 +74,26 @@ body {
 
 .spike {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 48px;
+    height: 48px;
     background-image: url('spike.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: bottom;
     z-index: 5;
-    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
+    transform-origin: bottom center;
+    transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out, filter 0.25s ease-in-out;
+    filter:
+        drop-shadow(0 0 6px rgba(231, 76, 60, 0.95))
+        drop-shadow(2px 4px 3px rgba(0,0,0,0.65));
+}
+
+.spike.spike-lowered {
+    transform: translateY(36px) scaleY(0.25);
+    opacity: 0.22;
+    filter:
+        drop-shadow(0 0 2px rgba(231, 76, 60, 0.45))
+        drop-shadow(1px 2px 2px rgba(0,0,0,0.45));
 }
 
 .coin {

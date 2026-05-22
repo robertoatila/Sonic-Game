@@ -13,6 +13,7 @@ let gameActive = false;
 let isJumping = false;
 let isClimbing = false;
 let timerInterval;
+let spikeInterval;
 
 // NOVAS VARIÁVEIS PARA MOVIMENTO CONTÍNUO
 const keys = {};
@@ -26,6 +27,10 @@ let lastTime = 0;
 let animationFrameId;
 
 const obstacles = [];
+const SPIKE_SIZE = 48;
+const SPIKE_COLLISION_MARGIN = 4;
+const SPIKE_TOGGLE_INTERVAL = 900;
+let loweredSpikeIndex = 0;
 let coinBounds = null; // Guardar a posição da moeda
 let coinEl = null;
 
@@ -46,7 +51,9 @@ function buildWorld() {
     gameContainer.appendChild(sonicEl);
     gameContainer.appendChild(startScreen);
     gameContainer.appendChild(endScreen);
+    clearInterval(spikeInterval);
     obstacles.length = 0;
+    loweredSpikeIndex = 0;
     
     // Configurações e limites iniciais
     sonicX = 10;
@@ -81,13 +88,20 @@ function buildWorld() {
             let spike = document.createElement('div');
             spike.className = 'spike';
             // Posiciona no meio do degrau atual
-            let spikeX = (i * 150) + (150 / 2) - 15; 
+            let spikeX = (i * 150) + (150 / 2) - (SPIKE_SIZE / 2);
             let spikeY = (i * 75) + 75; 
             spike.style.left = spikeX + 'px';
             spike.style.bottom = spikeY + 'px';
             gameContainer.appendChild(spike);
             
-            obstacles.push({ x: spikeX, y: spikeY, width: 30, height: 30 });
+            obstacles.push({
+                el: spike,
+                x: spikeX + SPIKE_COLLISION_MARGIN,
+                y: spikeY + SPIKE_COLLISION_MARGIN,
+                width: SPIKE_SIZE - (SPIKE_COLLISION_MARGIN * 2),
+                height: SPIKE_SIZE - (SPIKE_COLLISION_MARGIN * 2),
+                active: true
+            });
         }
     }
     
@@ -108,6 +122,7 @@ function startGame() {
     startScreen.style.display = 'none';
     gameActive = true;
     lastTime = performance.now();
+    startSpikeCycle();
     
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
     animationFrameId = requestAnimationFrame(gameLoop);
@@ -145,6 +160,7 @@ function endGame(win, message) {
     if (!gameActive) return;
     gameActive = false;
     clearInterval(timerInterval);
+    clearInterval(spikeInterval);
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
     
     if (win) {
@@ -157,6 +173,28 @@ function endGame(win, message) {
     
     endMessage.innerText = message;
     endScreen.style.display = 'flex';
+}
+
+function startSpikeCycle() {
+    clearInterval(spikeInterval);
+    loweredSpikeIndex = 0;
+    updateSpikeStates();
+
+    spikeInterval = setInterval(() => {
+        if (!gameActive || obstacles.length === 0) return;
+        loweredSpikeIndex = (loweredSpikeIndex + 1) % obstacles.length;
+        updateSpikeStates();
+    }, SPIKE_TOGGLE_INTERVAL);
+}
+
+function updateSpikeStates() {
+    for (let i = 0; i < obstacles.length; i++) {
+        let obs = obstacles[i];
+        let isLowered = i === loweredSpikeIndex;
+
+        obs.active = !isLowered;
+        obs.el.classList.toggle('spike-lowered', isLowered);
+    }
 }
 
 // Colisão com espinhos
@@ -187,6 +225,8 @@ function checkCollisions() {
     // Checa colisão com espinhos (Derrota)
     for (let i = 0; i < obstacles.length; i++) {
         let obs = obstacles[i];
+        if (!obs.active) continue;
+
         if (sX < obs.x + obs.width &&
             sX + sW > obs.x &&
             sY < obs.y + obs.height &&
