@@ -37,4 +37,4 @@ Como se trata de um projeto *front-end* estático, não é necessário instalar 
 
 ## 👨‍💻 Autor
 
-Desenvolvido por **Roberto Átila**.
+Desenvolvido por **Roberto Átila e Pietro Ferreira**.
