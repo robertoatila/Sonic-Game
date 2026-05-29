@@ -14,23 +14,29 @@
         <!-- HUD de Interface (Sempre visível, mas só roda após start) -->
         <div class="hud">
             <div>Pontos: <span id="score" style="color: #f1c40f;">0</span></div>
-            <div>Tempo: <span id="time" style="color: #e74c3c;">30</span>s</div>
+            <div>Tempo: <span id="time" style="color: #e74c3c;">40</span>s</div>
+            <div>Fase: <span id="phase" style="color: #64d2ff;">1</span></div>
+            <div>Vidas: <span id="lives" style="color: #2ecc71;">4</span></div>
         </div>
 
-        <div id="game-container">
+        <div id="game-container" class="phase-1">
 
             <!-- O Sonic -->
             <div id="sonic"></div>
+            <div id="enemy" aria-hidden="true"></div>
+            <div id="phase-message" aria-live="polite"></div>
 
             <!-- Tela Inicial Overlay -->
             <div id="start-screen" class="overlay">
                 <h2>Sonic e as Escadas</h2>
                 <div class="instructions-box">
-                    <h3>Regras e Instruções</h3>
+                    <h3>Regras e Instruções - V2.0</h3>
                     <p><strong>Regra de Subida:</strong> Só é possível subir um degrau da escada pulando quando você
                         estiver na borda direita do degrau atual. Você não pode subir simplesmente correndo contra a
                         parede.</p>
-                    <p><strong>Objetivo:</strong> Você tem 30 segundos para chegar ao topo!</p>
+                    <p><strong>Objetivo:</strong> Colete a moeda da fase 1 para avançar e a moeda da fase 2 para vencer.</p>
+                    <p><strong>Desafio:</strong> Você tem 4 vidas e 40 segundos por fase. Robotnik voa com uma jaqueta
+                        voadora e dispara tiros lentos de blaster. Cada tiro acertado retira uma vida.</p>
                     <p><strong>Controles:</strong></p>
                     <ul>
                         <li><strong>Pulo/Subir:</strong> W, Seta para Cima ou Espaço</li>

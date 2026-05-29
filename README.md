@@ -1,40 +1,93 @@
-# Sonic e as Escadas 🦔🪜
+# Sonic e as Escadas - Versao 2.0
 
-Um projeto didático de um jogo de plataformas desenvolvido inteiramente com **HTML5, CSS3 e JavaScript (Vanilla)**. O jogo desafia o jogador a guiar a personagem até ao topo de uma escadaria de plataformas flutuantes, desviando-se de obstáculos mortais e apanhando a moeda final num limite de 30 segundos.
+Projeto didatico de jogo de plataformas feito com **HTML5, CSS3 e JavaScript Vanilla**. Nesta versao, o jogador precisa subir as plataformas, desviar dos espinhos, escapar dos tiros de blaster do Robotnik e vencer duas fases com dificuldade crescente.
 
-## 🎮 Jogabilidade e Regras
+## Jogabilidade e Regras
 
-* **Mecânica de Subida:** Só é possível subir para o próximo degrau se o jogador saltar quando estiver posicionado na extremidade direita do degrau atual. Não é possível subir simplesmente correndo contra a parede da plataforma.
-* **Obstáculos:** O caminho contém espinhos mortais nos degraus 2, 4 e 6. Tocar neles resulta em *Game Over* imediato.
-* **Vitória:** Chegar ao último degrau (8º) e apanhar a moeda dourada antes que o cronómetro chegue a zero.
-* **Tempo:** O jogador tem exatamente 30 segundos para concluir o desafio.
+* **Objetivo:** pegar a moeda da fase 1 para avancar e pegar a moeda da fase 2 para vencer.
+* **Tempo:** cada fase comeca com 40 segundos.
+* **Vidas:** o jogador inicia com 4 vidas.
+* **Colisoes:** tocar em um espinho ativo ou em um tiro lento de blaster retira 1 vida. Se ainda houver vidas, o Sonic volta ao inicio da fase e fica invulneravel por alguns instantes. Se as vidas acabarem, ocorre Game Over.
+* **Subida:** so e possivel subir para o proximo degrau pulando na borda direita da plataforma atual.
+* **Dificuldade crescente:** a fase 2 muda o visual do cenario, adiciona mais espinhos e aumenta a velocidade do Robotnik, dos tiros e do ciclo dos espinhos.
 
-## ⌨️ Controlos
+## Controles
 
-* **Saltar / Subir Degrau:** `W`, `Seta para Cima (↑)` ou `Espaço`
-* **Mover para a Direita:** `D` ou `Seta Direita (→)`
-* **Mover para a Esquerda:** `A` ou `Seta Esquerda (←)`
+* **Pular / Subir degrau:** `W`, `Seta para Cima` ou `Espaco`
+* **Mover para a direita:** `D` ou `Seta Direita`
+* **Mover para a esquerda:** `A` ou `Seta Esquerda`
 
-## 🚀 Como Executar o Projeto
+## Algoritmos Utilizados
 
-Como se trata de um projeto *front-end* estático, não é necessário instalar dependências ou servidores complexos.
+### Robotnik inteligente e tiros de blaster
 
-1.  Faça o clone do repositório para a sua máquina local:
-    ```bash
-    git clone [https://github.com/robertoatila/Sonic-Game.git](https://github.com/robertoatila/Sonic-Game.git)
-    ```
-2.  Navegue até à pasta do projeto e abra o ficheiro `index.html` no seu navegador web preferido.
+Robotnik voa usando uma jaqueta voadora e identifica a posicao do Sonic a cada frame usando o centro do personagem como alvo. Em seguida, calcula uma posicao de voo perto do jogador, mas mantendo distancia para disparar:
 
-## 🛠️ Tecnologias Utilizadas
+```text
+deltaX = sonicCentroX - robotnikCentroX
+deltaY = sonicCentroY - robotnikCentroY
+distancia = raiz(deltaX^2 + deltaY^2)
+```
 
-* **HTML5:** Estrutura semântica do jogo, contentores principais, ecrã de início e ecrã de fim.
-* **CSS3:** Estilização retro com *pixel art*, animações em *keyframes* (como o movimento da moeda) e posicionamento absoluto para a renderização da HUD e do cenário.
-* **JavaScript (ES6):**
-    * Lógica central do jogo orientada a eventos.
-    * Ciclo de jogo contínuo (*Game Loop*) a 60 FPS utilizando `requestAnimationFrame` para uma movimentação suave.
-    * Sistema de deteção de colisões (AABB - *Axis-Aligned Bounding Box*) para os espinhos e para a moeda.
-    * Física de saltos baseada em cálculos de velocidade, gravidade e equações parabólicas para criar transições precisas entre os degraus.
+Depois disso, o vetor e normalizado para que Robotnik voe na direcao correta sem depender de valores fixos para cima, baixo, esquerda ou direita. A velocidade vem da fase atual:
 
-## 👨‍💻 Autor
+```text
+robotnikX += (deltaX / distancia) * velocidadeDaFase
+robotnikY += (deltaY / distancia) * velocidadeDaFase
+```
 
-Desenvolvido por **Roberto Átila e Pietro Ferreira**.
+Na fase 1, a velocidade de voo e `1.25`. Na fase 2, ela passa para `2.0`, tornando a perseguicao mais dificil sem deixar o jogo injusto.
+
+Os tiros de blaster tambem usam vetor normalizado. Quando o tempo de recarga termina, o jogo cria um projetil na posicao do Robotnik, calcula a direcao ate o Sonic e move o tiro lentamente. Na fase 1 o tiro se move com velocidade `2.4`; na fase 2, `3.1`. Cada tiro que acerta o Sonic retira uma vida.
+
+### Sistema de fases
+
+O jogo possui uma lista de configuracoes chamada `PHASES`. Cada fase define:
+
+* numero da fase;
+* classe visual do cenario;
+* degraus que recebem espinhos;
+* velocidade do Robotnik;
+* velocidade e intervalo dos tiros de blaster;
+* intervalo de ativacao/desativacao dos espinhos.
+
+Quando o jogador coleta a moeda na fase 1, o jogo incrementa `phaseIndex`, recria o mundo com a configuracao da fase 2, mostra uma mensagem de mudanca de fase e reinicia o cronometro para 40 segundos. Quando a moeda e coletada na fase 2, o jogo termina com vitoria.
+
+### Sistema de vidas e colisao
+
+As colisoes usam AABB (*Axis-Aligned Bounding Box*), comparando os retangulos do Sonic, dos espinhos, da moeda e dos tiros de blaster. Quando ha colisao com perigo:
+
+* o jogo verifica se o Sonic esta invulneravel;
+* se nao estiver, subtrai 1 vida;
+* se vidas ainda forem maiores que 0, o Sonic volta ao inicio da fase;
+* se vidas chegarem a 0, o jogo mostra Game Over.
+
+A invulnerabilidade temporaria evita que uma unica colisao seja contada varias vezes seguidas.
+
+## Demonstracao Pratica
+
+1. Abra `index.html` no navegador.
+2. Clique em **Comecar Jogo**.
+3. Mostre o HUD com pontos, tempo, fase e vidas.
+4. Mostre o Robotnik voando e disparando tiros lentos de blaster.
+5. Encoste em um espinho ou em um tiro para mostrar a perda de vida e o respawn.
+6. Pegue a moeda da fase 1 para demonstrar a troca automatica de fase.
+7. Na fase 2, mostre o cenario diferente e a dificuldade maior.
+8. Pegue a moeda final para vencer.
+
+## Como Executar
+
+O projeto e estatico e nao precisa de instalacao de dependencias.
+
+1. Abra a pasta do projeto.
+2. Execute o arquivo `index.html` em um navegador moderno.
+
+## Tecnologias
+
+* **HTML5:** estrutura do jogo, HUD, telas de inicio/fim e elementos principais.
+* **CSS3:** cenario, sprites, Robotnik visual, tiros de blaster, animacoes e estados de fase.
+* **JavaScript:** loop principal, movimento continuo, fisica de pulo, Robotnik voador, tiros de blaster, fases, temporizador, vidas e colisoes.
+
+## Autores
+
+Desenvolvido por **Roberto Atila** e **Pietro Ferreira**.
