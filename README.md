@@ -38,7 +38,7 @@ robotnikY += (deltaY / distancia) * velocidadeDaFase
 
 Na fase 1, a velocidade de voo e `1.25`. Na fase 2, ela passa para `2.0`, tornando a perseguicao mais dificil sem deixar o jogo injusto.
 
-Os tiros de blaster tambem usam vetor normalizado. Quando o tempo de recarga termina, o jogo cria um projetil na posicao do Robotnik, calcula a direcao ate o Sonic e move o tiro lentamente. Na fase 1 o tiro se move com velocidade `2.4`; na fase 2, `3.1`. Cada tiro que acerta o Sonic retira uma vida.
+Os tiros de blaster tambem usam vetor normalizado. A cada 3 segundos, o jogo cria um projetil na posicao do Robotnik, calcula a direcao ate o Sonic e move o tiro lentamente. Na fase 1 o tiro se move com velocidade `2.4`; na fase 2, `3.1`. Cada tiro que acerta o Sonic retira uma vida.
 
 ### Sistema de fases
 

@@ -29,9 +29,9 @@ const PHASES = [
         spikeSteps: [3, 6],
         enemySpeed: 1.25,
         blasterSpeed: 2.4,
-        blasterCooldown: 2100,
+        blasterCooldown: 3000,
         spikeToggleInterval: 1300,
-        message: 'Fase 1 concluída! Prepare-se: Robotnik vai atirar mais rápido.'
+        message: 'Fase 1 concluída! Prepare-se: Robotnik vai voar e mirar melhor.'
     },
     {
         number: 2,
@@ -39,7 +39,7 @@ const PHASES = [
         spikeSteps: [2, 4, 6],
         enemySpeed: 2,
         blasterSpeed: 3.1,
-        blasterCooldown: 1700,
+        blasterCooldown: 3000,
         spikeToggleInterval: 1000,
         message: 'Fase 2: dificuldade aumentada!'
     }
