@@ -380,8 +380,8 @@ function updateEnemy(timeScale) {
     const sonicCenterX = sonicX + (SONIC_SIZE / 2);
     const sonicCenterY = sonicY + jumpY + (SONIC_SIZE / 2);
     const hoverDirection = sonicCenterX < GAME_WIDTH - 340 ? 1 : -1;
-    const targetX = sonicCenterX + (hoverDirection * 260) - (enemy.width / 2);
-    const targetY = clamp(sonicCenterY + 145, 135, GAME_HEIGHT - enemy.height - 35);
+    const targetX = sonicCenterX + (hoverDirection * 210) - (enemy.width / 2);
+    const targetY = clamp(sonicCenterY + 280, 420, GAME_HEIGHT - enemy.height - 35);
     const deltaX = targetX - enemy.x;
     const deltaY = targetY - enemy.y;
     const distance = Math.hypot(deltaX, deltaY);
@@ -501,6 +501,18 @@ function checkCollisions() {
             handleDamage('Você tocou em um espinho mortal!');
             return;
         }
+    }
+
+    const enemyBounds = {
+        x: enemy.x + 10,
+        y: enemy.y + 8,
+        width: enemy.width - 20,
+        height: enemy.height - 16
+    };
+
+    if (boxesOverlap(sonicBounds, enemyBounds)) {
+        handleDamage('Você encostou no Robotnik!');
+        return;
     }
 
     for (let i = blasterShots.length - 1; i >= 0; i--) {

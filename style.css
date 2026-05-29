@@ -57,7 +57,7 @@ body {
 }
 
 #game-container.phase-2 {
-    background-image: linear-gradient(rgba(120, 20, 60, 0.34), rgba(10, 10, 25, 0.42)), url('background.jpg');
+    background-image: linear-gradient(rgba(120, 20, 60, 0.22), rgba(10, 10, 25, 0.32)), url('background2.jpg');
     border-color: #8e44ad;
 }
 

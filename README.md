@@ -7,9 +7,9 @@ Projeto didatico de jogo de plataformas feito com **HTML5, CSS3 e JavaScript Van
 * **Objetivo:** pegar a moeda da fase 1 para avancar e pegar a moeda da fase 2 para vencer.
 * **Tempo:** cada fase comeca com 40 segundos.
 * **Vidas:** o jogador inicia com 4 vidas.
-* **Colisoes:** tocar em um espinho ativo ou em um tiro lento de blaster retira 1 vida. Se ainda houver vidas, o Sonic volta ao inicio da fase e fica invulneravel por alguns instantes. Se as vidas acabarem, ocorre Game Over.
+* **Colisoes:** tocar em um espinho ativo, no corpo do Robotnik ou em um tiro lento de blaster retira 1 vida. Se ainda houver vidas, o Sonic volta ao inicio da fase e fica invulneravel por alguns instantes. Se as vidas acabarem, ocorre Game Over.
 * **Subida:** so e possivel subir para o proximo degrau pulando na borda direita da plataforma atual.
-* **Dificuldade crescente:** a fase 2 muda o visual do cenario, adiciona mais espinhos e aumenta a velocidade do Robotnik, dos tiros e do ciclo dos espinhos.
+* **Dificuldade crescente:** a fase 2 usa `background2.jpg`, adiciona mais espinhos e aumenta a velocidade do Robotnik, dos tiros e do ciclo dos espinhos.
 
 ## Controles
 
@@ -55,7 +55,7 @@ Quando o jogador coleta a moeda na fase 1, o jogo incrementa `phaseIndex`, recri
 
 ### Sistema de vidas e colisao
 
-As colisoes usam AABB (*Axis-Aligned Bounding Box*), comparando os retangulos do Sonic, dos espinhos, da moeda e dos tiros de blaster. Quando ha colisao com perigo:
+As colisoes usam AABB (*Axis-Aligned Bounding Box*), comparando os retangulos do Sonic, dos espinhos, da moeda, do corpo do Robotnik e dos tiros de blaster. Quando ha colisao com perigo:
 
 * o jogo verifica se o Sonic esta invulneravel;
 * se nao estiver, subtrai 1 vida;
@@ -70,7 +70,7 @@ A invulnerabilidade temporaria evita que uma unica colisao seja contada varias v
 2. Clique em **Comecar Jogo**.
 3. Mostre o HUD com pontos, tempo, fase e vidas.
 4. Mostre o Robotnik voando e disparando tiros lentos de blaster.
-5. Encoste em um espinho ou em um tiro para mostrar a perda de vida e o respawn.
+5. Encoste em um espinho, no Robotnik ou em um tiro para mostrar a perda de vida e o respawn.
 6. Pegue a moeda da fase 1 para demonstrar a troca automatica de fase.
 7. Na fase 2, mostre o cenario diferente e a dificuldade maior.
 8. Pegue a moeda final para vencer.
