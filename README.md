@@ -19,11 +19,11 @@ Projeto didatico de jogo de plataformas feito com **HTML5, CSS3 e JavaScript Van
 
 ## Algoritmos Utilizados
 
-### Robotnik inteligente e tiros de blaster
+### Robotnik no ceu e tiros de blaster
 
-Nas fases 1 e 2, Robotnik nasce pelo lado direito e usa uma patrulha aerea simples entre `x=760` e `x=930`, em `y=635`. Ele dispara blaster e tira vida ao tocar no Sonic, mas nao fica em cima dos degraus nem da moeda.
+Em todas as fases, Robotnik nasce pelo lado direito e usa uma patrulha aerea simples entre `x=760` e `x=930`, em `y=650`. Ele dispara blaster e tira vida ao tocar no Sonic, mas nao fica em cima dos degraus nem da moeda.
 
-Na fase 3, Robotnik voa usando uma jaqueta voadora e identifica a posicao do Sonic a cada frame usando o centro do personagem como alvo. Em seguida, calcula uma posicao de voo perto do jogador, mas mantendo distancia para disparar:
+Para disparar, Robotnik identifica a posicao do Sonic usando o centro do personagem como alvo:
 
 ```text
 deltaX = sonicCentroX - robotnikCentroX
@@ -31,14 +31,14 @@ deltaY = sonicCentroY - robotnikCentroY
 distancia = raiz(deltaX^2 + deltaY^2)
 ```
 
-Depois disso, o vetor e normalizado para que Robotnik voe na direcao correta sem depender de valores fixos para cima, baixo, esquerda ou direita. A velocidade vem da fase atual:
+Depois disso, o vetor e normalizado para que o tiro voe na direcao correta sem depender de valores fixos para cima, baixo, esquerda ou direita. A velocidade vem da fase atual:
 
 ```text
-robotnikX += (deltaX / distancia) * velocidadeDaFase
-robotnikY += (deltaY / distancia) * velocidadeDaFase
+tiroX += (deltaX / distancia) * velocidadeDoTiro
+tiroY += (deltaY / distancia) * velocidadeDoTiro
 ```
 
-Na fase 1, a velocidade de patrulha e `1.25`. Na fase 2, a velocidade da patrulha passa para `2.0`. Na fase 3, a velocidade da IA passa para `3.2`, tornando o final mais dificil.
+Na fase 1, a velocidade de patrulha e `1.25`. Na fase 2, a velocidade da patrulha passa para `2.0`. Na fase 3, ela passa para `3.2`, tornando o final mais dificil sem tirar Robotnik do ceu.
 
 Os tiros de blaster ficam ativos desde a fase 1. Eles usam vetor normalizado: o jogo cria um projetil na posicao do Robotnik, calcula a direcao ate o Sonic e move o tiro lentamente. Na fase 1 o tiro se move com velocidade `2.4`, na fase 2 com `3.1` e na fase 3 com `4.0`. Cada tiro que acerta o Sonic retira uma vida.
 
@@ -49,7 +49,7 @@ O jogo possui uma lista de configuracoes chamada `PHASES`. Cada fase define:
 * numero da fase;
 * classe visual do cenario;
 * degraus que recebem espinhos;
-* modo do Robotnik: patrulha simples ou IA inteligente;
+* modo do Robotnik: patrulha aerea;
 * permissao para Robotnik causar dano e disparar;
 * velocidade do Robotnik;
 * velocidade e intervalo dos tiros de blaster;
@@ -75,7 +75,7 @@ A invulnerabilidade temporaria evita que uma unica colisao seja contada varias v
 3. Mostre o HUD com pontos, tempo, fase e vidas.
 4. Na fase 1, mostre o Robotnik vindo da direita, patrulhando, atirando e causando dano ao encostar.
 5. Pegue a moeda da fase 1 para demonstrar a troca automatica de fase.
-6. Na fase 2, mostre o Robotnik com a mesma patrulha pela direita, sem ficar em cima da moeda.
+6. Na fase 2 e na fase 3, mostre o Robotnik com a mesma patrulha pelo ceu, sem ficar em cima dos degraus nem da moeda.
 7. Encoste em um espinho, no Robotnik ou em um tiro para mostrar a perda de vida e o respawn.
 8. Avance ate a fase 3 e pegue a moeda final para vencer.
 

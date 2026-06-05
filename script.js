@@ -21,9 +21,9 @@ const ENEMY_WIDTH = 72;
 const ENEMY_HEIGHT = 72;
 const BLASTER_WIDTH = 34;
 const BLASTER_HEIGHT = 10;
-const ENEMY_RIGHT_PATROL_MIN_X = 760;
-const ENEMY_RIGHT_PATROL_MAX_X = 930;
-const ENEMY_RIGHT_PATROL_Y = 635;
+const ENEMY_SKY_PATROL_MIN_X = 760;
+const ENEMY_SKY_PATROL_MAX_X = 930;
+const ENEMY_SKY_PATROL_Y = 650;
 
 const PHASES = [
     {
@@ -33,9 +33,9 @@ const PHASES = [
         enemyMode: 'patrol',
         enemyCanDamage: true,
         enemyCanShoot: true,
-        enemyPatrolMinX: ENEMY_RIGHT_PATROL_MIN_X,
-        enemyPatrolMaxX: ENEMY_RIGHT_PATROL_MAX_X,
-        enemyPatrolY: ENEMY_RIGHT_PATROL_Y,
+        enemyPatrolMinX: ENEMY_SKY_PATROL_MIN_X,
+        enemyPatrolMaxX: ENEMY_SKY_PATROL_MAX_X,
+        enemyPatrolY: ENEMY_SKY_PATROL_Y,
         enemySpeed: 1.25,
         blasterSpeed: 2.4,
         blasterCooldown: 3000,
@@ -49,9 +49,9 @@ const PHASES = [
         enemyMode: 'patrol',
         enemyCanDamage: true,
         enemyCanShoot: true,
-        enemyPatrolMinX: ENEMY_RIGHT_PATROL_MIN_X,
-        enemyPatrolMaxX: ENEMY_RIGHT_PATROL_MAX_X,
-        enemyPatrolY: ENEMY_RIGHT_PATROL_Y,
+        enemyPatrolMinX: ENEMY_SKY_PATROL_MIN_X,
+        enemyPatrolMaxX: ENEMY_SKY_PATROL_MAX_X,
+        enemyPatrolY: ENEMY_SKY_PATROL_Y,
         enemySpeed: 2,
         blasterSpeed: 3.1,
         blasterCooldown: 3000,
@@ -68,12 +68,12 @@ const PHASES = [
         number: 3,
         cssClass: 'phase-3',
         spikeSteps: [1, 3, 5, 7],       // quase todos os degraus têm espinhos
-        enemyMode: 'smart',
+        enemyMode: 'patrol',
         enemyCanDamage: true,
         enemyCanShoot: true,
-        enemyPatrolMinX: 0,
-        enemyPatrolMaxX: GAME_WIDTH - ENEMY_WIDTH,
-        enemyPatrolY: GAME_HEIGHT - ENEMY_HEIGHT - 70,
+        enemyPatrolMinX: ENEMY_SKY_PATROL_MIN_X,
+        enemyPatrolMaxX: ENEMY_SKY_PATROL_MAX_X,
+        enemyPatrolY: ENEMY_SKY_PATROL_Y,
         enemySpeed: 3.2,                 // velocidade do Robotnik 2.56× a da fase 1
         blasterSpeed: 4.0,               // projétil mais rápido
         blasterCooldown: 1800,           // dispara a cada 1.8s (era 3s)
@@ -110,15 +110,8 @@ let targetX = 0;
 let diffX = 0;
 let lastTime = 0;
 
-// ========== Variáveis da Máquina de Estados do Inimigo ==========
-// enemyState: estado atual — 'PATROL' | 'CHASE' | 'ATTACK'
-// patrolDir: direção horizontal na patrulha (1 = direita, -1 = esquerda)
-// patrolTimer: contador de frames para inverter a direção de patrulha
-// attackCooldown: tempo restante (em ms normalizados) antes de nova investida
-let enemyState = 'PATROL';
+// Direção horizontal da patrulha do Robotnik: 1 = direita, -1 = esquerda.
 let patrolDir = 1;
-let patrolTimer = 0;
-let attackCooldown = 0;
 let animationFrameId;
 
 const obstacles = [];
@@ -128,8 +121,8 @@ let coinEl = null;
 const blasterShots = [];
 let lastBlasterShot = 0;
 const enemy = {
-    x: GAME_WIDTH - ENEMY_WIDTH - 35,
-    y: GAME_HEIGHT - ENEMY_HEIGHT - 70,
+    x: ENEMY_SKY_PATROL_MAX_X,
+    y: ENEMY_SKY_PATROL_Y,
     width: ENEMY_WIDTH,
     height: ENEMY_HEIGHT
 };
@@ -288,11 +281,7 @@ function resetPlayerPosition() {
     climbProgress = 0;
     sonicEl.style.backgroundImage = "url('prota.jfif')";
 
-    // Reseta a máquina de estados do inimigo ao estado inicial
-    enemyState = 'PATROL';
     patrolDir = 1;
-    patrolTimer = 0;
-    attackCooldown = 0;
 }
 
 function updateSonicPosition() {
@@ -424,134 +413,29 @@ function setInvulnerable() {
 function spawnEnemyFarFromSonic() {
     const phase = currentPhase();
 
-    if (phase.enemyMode === 'patrol') {
-        enemy.x = phase.enemyPatrolMaxX;
-        enemy.y = phase.enemyPatrolY;
-        patrolDir = -1;
-        return;
-    }
-
-    if (sonicX < GAME_WIDTH / 2) {
-        enemy.x = GAME_WIDTH - enemy.width - 35;
-        enemy.y = GAME_HEIGHT - enemy.height - 70;
-    } else {
-        enemy.x = 35;
-        enemy.y = GAME_HEIGHT - enemy.height - 70;
-    }
+    enemy.x = phase.enemyPatrolMaxX;
+    enemy.y = phase.enemyPatrolY;
+    patrolDir = -1;
 }
 
-// ========== MÁQUINA DE ESTADOS DO INIMIGO ==========
-//
-// Pergunta 1 (Professor): Como o inimigo identifica a posição do jogador?
-//   → Calcula os centros de Sonic e Robotnik e usa Math.hypot() para obter
-//     a distância euclidiana entre eles. Isso é mais preciso que distância
-//     Manhattan porque considera a diagonal.
-//
-// Pergunta 2 (Professor): Quais decisões o algoritmo toma?
-//   → Usa uma máquina de 3 estados com transições baseadas na distância:
-//     PATROL: patrulha horizontal quando longe (> 500px)
-//     CHASE:  perseguição direta quando em alcance médio (200-500px)
-//     ATTACK: investida rápida quando perto (< 200px) com cooldown
-//
-// Pergunta 3 (Professor): Quais variáveis são necessárias?
-//   → enemyState, patrolDir, patrolTimer, attackCooldown
-//   → enemy.x, enemy.y, currentPhase().enemySpeed, sonicX, sonicY, jumpY
-//
+// Robotnik sempre fica no ceu: nasce pela direita e patrulha na horizontal.
 function updateEnemy(timeScale) {
     if (!gameActive) return;
 
     const phase = currentPhase();
     const baseSpeed = phase.enemySpeed * timeScale;
 
-    if (phase.enemyMode === 'patrol') {
-        enemyState = 'PATROL';
-        enemy.x += patrolDir * baseSpeed;
+    enemy.x += patrolDir * baseSpeed;
 
-        if (enemy.x <= phase.enemyPatrolMinX) {
-            enemy.x = phase.enemyPatrolMinX;
-            patrolDir = 1;
-        } else if (enemy.x >= phase.enemyPatrolMaxX) {
-            enemy.x = phase.enemyPatrolMaxX;
-            patrolDir = -1;
-        }
-
-        enemy.y = phase.enemyPatrolY;
-        updateEnemyPosition();
-        return;
+    if (enemy.x <= phase.enemyPatrolMinX) {
+        enemy.x = phase.enemyPatrolMinX;
+        patrolDir = 1;
+    } else if (enemy.x >= phase.enemyPatrolMaxX) {
+        enemy.x = phase.enemyPatrolMaxX;
+        patrolDir = -1;
     }
 
-    // --- Passo 1: Calcular centros dos personagens ---
-    const sonicCenterX = sonicX + (SONIC_SIZE / 2);
-    const sonicCenterY = sonicY + jumpY + (SONIC_SIZE / 2);
-    const enemyCenterX = enemy.x + (enemy.width / 2);
-    const enemyCenterY = enemy.y + (enemy.height / 2);
-
-    // --- Passo 2: Calcular distância euclidiana ---
-    const deltaX = sonicCenterX - enemyCenterX;
-    const deltaY = sonicCenterY - enemyCenterY;
-    const distance = Math.hypot(deltaX, deltaY);
-
-    // --- Passo 3: Determinar o estado atual com base na distância ---
-    // Transições: distância > 500 → PATROL | 200-500 → CHASE | < 200 → ATTACK
-    if (distance > 500) {
-        enemyState = 'PATROL';
-    } else if (distance >= 200) {
-        enemyState = 'CHASE';
-    } else {
-        enemyState = 'ATTACK';
-    }
-
-    // --- Passo 4: Executar comportamento de acordo com o estado ---
-    switch (enemyState) {
-
-        case 'PATROL':
-            // Patrulha horizontal: anda de um lado para o outro
-            // Inverte direção a cada ~120 frames para cobrir a área
-            patrolTimer += timeScale;
-            if (patrolTimer > 120) {
-                patrolDir *= -1;
-                patrolTimer = 0;
-            }
-            enemy.x += patrolDir * baseSpeed;
-
-            // Leve oscilação vertical para parecer "voando"
-            enemy.y += Math.sin(patrolTimer * 0.1) * 0.5 * timeScale;
-            break;
-
-        case 'CHASE':
-            // Perseguição direta: segue o Sonic com velocidade normal
-            // Normaliza o vetor direção (deltaX/distance) para mover em qualquer ângulo
-            if (distance > 1) {
-                enemy.x += (deltaX / distance) * baseSpeed;
-                enemy.y += (deltaY / distance) * baseSpeed;
-            }
-            break;
-
-        case 'ATTACK':
-            // Investida rápida com cooldown de 1.2 segundos
-            if (attackCooldown <= 0) {
-                // Investida: velocidade × 1.8 na direção do Sonic
-                if (distance > 1) {
-                    const attackSpeed = baseSpeed * 1.8;
-                    enemy.x += (deltaX / distance) * attackSpeed;
-                    enemy.y += (deltaY / distance) * attackSpeed;
-                }
-                // Após cada investida, ativa cooldown (~1.2s = 72 frames a 60fps)
-                attackCooldown = 72;
-            } else {
-                // Durante o cooldown, recua levemente para dar chance ao jogador
-                attackCooldown -= timeScale;
-                if (distance > 1) {
-                    enemy.x -= (deltaX / distance) * baseSpeed * 0.3;
-                    enemy.y -= (deltaY / distance) * baseSpeed * 0.3;
-                }
-            }
-            break;
-    }
-
-    // --- Passo 5: Manter inimigo dentro dos limites do mapa ---
-    enemy.x = clamp(enemy.x, 0, GAME_WIDTH - enemy.width);
-    enemy.y = clamp(enemy.y, 35, GAME_HEIGHT - enemy.height);
+    enemy.y = phase.enemyPatrolY;
     updateEnemyPosition();
 }
 
