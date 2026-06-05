@@ -21,7 +21,7 @@ Projeto didatico de jogo de plataformas feito com **HTML5, CSS3 e JavaScript Van
 
 ### Robotnik inteligente e tiros de blaster
 
-Nas fases 1 e 2, Robotnik nasce pelo lado direito e usa uma patrulha simples entre `x=700` e a posicao segura antes da moeda final, em `y=520`. Ele dispara blaster e tira vida ao tocar no Sonic, mas nao fica em cima da moeda.
+Nas fases 1 e 2, Robotnik nasce pelo lado direito e usa uma patrulha aerea simples entre `x=760` e `x=930`, em `y=635`. Ele dispara blaster e tira vida ao tocar no Sonic, mas nao fica em cima dos degraus nem da moeda.
 
 Na fase 3, Robotnik voa usando uma jaqueta voadora e identifica a posicao do Sonic a cada frame usando o centro do personagem como alvo. Em seguida, calcula uma posicao de voo perto do jogador, mas mantendo distancia para disparar:
 
