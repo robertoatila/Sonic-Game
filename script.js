@@ -139,6 +139,7 @@ const startScreen = document.getElementById('start-screen');
 const endScreen = document.getElementById('end-screen');
 const endTitle = document.getElementById('end-title');
 const endMessage = document.getElementById('end-message');
+const touchControlsEl = document.getElementById('touch-controls');
 
 function currentPhase() {
     return PHASES[phaseIndex];
@@ -175,6 +176,7 @@ function buildWorld() {
     gameContainer.appendChild(phaseMessageEl);
     gameContainer.appendChild(startScreen);
     gameContainer.appendChild(endScreen);
+    if (touchControlsEl) gameContainer.appendChild(touchControlsEl);
 
     resetPlayerPosition();
     spawnEnemyFarFromSonic();
