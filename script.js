@@ -27,6 +27,12 @@ const PHASES = [
         number: 1,
         cssClass: 'phase-1',
         spikeSteps: [3, 6],
+        enemyMode: 'patrol',
+        enemyCanDamage: false,
+        enemyCanShoot: false,
+        enemyPatrolMinX: 40,
+        enemyPatrolMaxX: 760,
+        enemyPatrolY: 520,
         enemySpeed: 1.25,
         blasterSpeed: 2.4,
         blasterCooldown: 3000,
@@ -37,6 +43,12 @@ const PHASES = [
         number: 2,
         cssClass: 'phase-2',
         spikeSteps: [2, 4, 6],
+        enemyMode: 'smart',
+        enemyCanDamage: true,
+        enemyCanShoot: true,
+        enemyPatrolMinX: 0,
+        enemyPatrolMaxX: GAME_WIDTH - ENEMY_WIDTH,
+        enemyPatrolY: GAME_HEIGHT - ENEMY_HEIGHT - 70,
         enemySpeed: 2,
         blasterSpeed: 3.1,
         blasterCooldown: 3000,
@@ -53,6 +65,12 @@ const PHASES = [
         number: 3,
         cssClass: 'phase-3',
         spikeSteps: [1, 3, 5, 7],       // quase todos os degraus têm espinhos
+        enemyMode: 'smart',
+        enemyCanDamage: true,
+        enemyCanShoot: true,
+        enemyPatrolMinX: 0,
+        enemyPatrolMaxX: GAME_WIDTH - ENEMY_WIDTH,
+        enemyPatrolY: GAME_HEIGHT - ENEMY_HEIGHT - 70,
         enemySpeed: 3.2,                 // velocidade do Robotnik 2.56× a da fase 1
         blasterSpeed: 4.0,               // projétil mais rápido
         blasterCooldown: 1800,           // dispara a cada 1.8s (era 3s)
@@ -401,6 +419,15 @@ function setInvulnerable() {
 }
 
 function spawnEnemyFarFromSonic() {
+    const phase = currentPhase();
+
+    if (phase.enemyMode === 'patrol') {
+        enemy.x = phase.enemyPatrolMinX;
+        enemy.y = phase.enemyPatrolY;
+        patrolDir = 1;
+        return;
+    }
+
     if (sonicX < GAME_WIDTH / 2) {
         enemy.x = GAME_WIDTH - enemy.width - 35;
         enemy.y = GAME_HEIGHT - enemy.height - 70;
@@ -430,6 +457,26 @@ function spawnEnemyFarFromSonic() {
 function updateEnemy(timeScale) {
     if (!gameActive) return;
 
+    const phase = currentPhase();
+    const baseSpeed = phase.enemySpeed * timeScale;
+
+    if (phase.enemyMode === 'patrol') {
+        enemyState = 'PATROL';
+        enemy.x += patrolDir * baseSpeed;
+
+        if (enemy.x <= phase.enemyPatrolMinX) {
+            enemy.x = phase.enemyPatrolMinX;
+            patrolDir = 1;
+        } else if (enemy.x >= phase.enemyPatrolMaxX) {
+            enemy.x = phase.enemyPatrolMaxX;
+            patrolDir = -1;
+        }
+
+        enemy.y = phase.enemyPatrolY;
+        updateEnemyPosition();
+        return;
+    }
+
     // --- Passo 1: Calcular centros dos personagens ---
     const sonicCenterX = sonicX + (SONIC_SIZE / 2);
     const sonicCenterY = sonicY + jumpY + (SONIC_SIZE / 2);
@@ -450,9 +497,6 @@ function updateEnemy(timeScale) {
     } else {
         enemyState = 'ATTACK';
     }
-
-    // Velocidade base definida pela fase atual (cresce a cada fase)
-    const baseSpeed = currentPhase().enemySpeed * timeScale;
 
     // --- Passo 4: Executar comportamento de acordo com o estado ---
     switch (enemyState) {
@@ -511,7 +555,9 @@ function updateEnemy(timeScale) {
 function updateBlasterShots(timeScale, timestamp) {
     if (!gameActive) return;
 
-    if (timestamp - lastBlasterShot >= currentPhase().blasterCooldown) {
+    const phase = currentPhase();
+
+    if (phase.enemyCanShoot && timestamp - lastBlasterShot >= phase.blasterCooldown) {
         shootBlaster();
         lastBlasterShot = timestamp;
     }
@@ -530,6 +576,8 @@ function updateBlasterShots(timeScale, timestamp) {
 }
 
 function shootBlaster() {
+    if (!currentPhase().enemyCanShoot) return;
+
     const sonicCenterX = sonicX + (SONIC_SIZE / 2);
     const sonicCenterY = sonicY + jumpY + (SONIC_SIZE / 2);
     const robotnikCenterX = enemy.x + (enemy.width / 2);
@@ -612,6 +660,7 @@ function boxesOverlap(a, b) {
 function checkCollisions() {
     if (!gameActive) return;
 
+    const phase = currentPhase();
     const sonicBounds = {
         x: sonicX,
         y: sonicY + jumpY,
@@ -634,23 +683,27 @@ function checkCollisions() {
         }
     }
 
-    const enemyBounds = {
-        x: enemy.x + 10,
-        y: enemy.y + 8,
-        width: enemy.width - 20,
-        height: enemy.height - 16
-    };
+    if (phase.enemyCanDamage) {
+        const enemyBounds = {
+            x: enemy.x + 10,
+            y: enemy.y + 8,
+            width: enemy.width - 20,
+            height: enemy.height - 16
+        };
 
-    if (boxesOverlap(sonicBounds, enemyBounds)) {
-        handleDamage('Você encostou no Robotnik!');
-        return;
+        if (boxesOverlap(sonicBounds, enemyBounds)) {
+            handleDamage('Você encostou no Robotnik!');
+            return;
+        }
     }
 
-    for (let i = blasterShots.length - 1; i >= 0; i--) {
-        if (boxesOverlap(sonicBounds, blasterShots[i])) {
-            removeBlasterShot(i);
-            handleDamage('Você foi atingido pelo blaster do Robotnik!');
-            return;
+    if (phase.enemyCanShoot) {
+        for (let i = blasterShots.length - 1; i >= 0; i--) {
+            if (boxesOverlap(sonicBounds, blasterShots[i])) {
+                removeBlasterShot(i);
+                handleDamage('Você foi atingido pelo blaster do Robotnik!');
+                return;
+            }
         }
     }
 }
