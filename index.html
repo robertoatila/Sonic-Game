@@ -34,7 +34,8 @@
                     <p><strong>Regra de Subida:</strong> Só é possível subir um degrau da escada pulando quando você
                         estiver na borda direita do degrau atual. Você não pode subir simplesmente correndo contra a
                         parede.</p>
-                    <p><strong>Objetivo:</strong> Colete a moeda da fase 1 para avançar e a moeda da fase 2 para vencer.</p>
+                    <p><strong>Objetivo:</strong> Colete a moeda de cada fase para avançar. São 3 fases com dificuldade
+                        crescente — vença todas para completar o jogo!</p>
                     <p><strong>Desafio:</strong> Você tem 4 vidas e 40 segundos por fase. Robotnik voa com uma jaqueta
                         voadora e dispara um tiro lento de blaster a cada 3 segundos. Encostar nele ou no tiro retira
                         uma vida.</p>
@@ -50,9 +51,16 @@
 
             <!-- Tela de Fim de Jogo Overlay -->
             <div id="end-screen" class="overlay" style="display: none;">
-                <h2 id="end-title"></h2>
+                <h2 id="end-title" aria-label="Resultado do jogo">&#8203;</h2>
                 <p id="end-message"></p>
                 <button onclick="resetToStart()">Jogar Novamente</button>
+            </div>
+
+            <!-- Controles Touch para Mobile -->
+            <div id="touch-controls">
+                <button class="touch-btn" id="touch-left" aria-label="Mover esquerda">←</button>
+                <button class="touch-btn" id="touch-jump" aria-label="Pular">↑</button>
+                <button class="touch-btn" id="touch-right" aria-label="Mover direita">→</button>
             </div>
 
         </div>

@@ -41,7 +41,23 @@ const PHASES = [
         blasterSpeed: 3.1,
         blasterCooldown: 3000,
         spikeToggleInterval: 1000,
-        message: 'Fase 2: dificuldade aumentada!'
+        message: 'Fase 2 concluída! Prepare-se para a FASE FINAL!'
+    },
+    // ========== FASE 3 — Dificuldade Máxima ==========
+    // Evento de mudança: coleta da moeda no step 7 dispara collectCoin()
+    // buildWorld() reconstrói a cena inteira com os novos parâmetros
+    // A dificuldade cresce em 4 eixos: velocidade do inimigo, velocidade do
+    // blaster, cooldown do blaster (menor = mais tiros) e intervalo dos
+    // espinhos (menor = pisca mais rápido)
+    {
+        number: 3,
+        cssClass: 'phase-3',
+        spikeSteps: [1, 3, 5, 7],       // quase todos os degraus têm espinhos
+        enemySpeed: 3.2,                 // velocidade do Robotnik 2.56× a da fase 1
+        blasterSpeed: 4.0,               // projétil mais rápido
+        blasterCooldown: 1800,           // dispara a cada 1.8s (era 3s)
+        spikeToggleInterval: 700,        // espinhos alternam a cada 0.7s
+        message: 'FASE FINAL! Robotnik está furioso!'
     }
 ];
 
@@ -72,6 +88,16 @@ let startX = 0;
 let targetX = 0;
 let diffX = 0;
 let lastTime = 0;
+
+// ========== Variáveis da Máquina de Estados do Inimigo ==========
+// enemyState: estado atual — 'PATROL' | 'CHASE' | 'ATTACK'
+// patrolDir: direção horizontal na patrulha (1 = direita, -1 = esquerda)
+// patrolTimer: contador de frames para inverter a direção de patrulha
+// attackCooldown: tempo restante (em ms normalizados) antes de nova investida
+let enemyState = 'PATROL';
+let patrolDir = 1;
+let patrolTimer = 0;
+let attackCooldown = 0;
 let animationFrameId;
 
 const obstacles = [];
@@ -128,7 +154,7 @@ function buildWorld() {
     coinBounds = null;
 
     gameContainer.innerHTML = '';
-    gameContainer.classList.remove('phase-1', 'phase-2');
+    gameContainer.classList.remove('phase-1', 'phase-2', 'phase-3');
     gameContainer.classList.add(currentPhase().cssClass);
     gameContainer.appendChild(sonicEl);
     gameContainer.appendChild(enemyEl);
@@ -240,6 +266,12 @@ function resetPlayerPosition() {
     jumpVelocity = 0;
     climbProgress = 0;
     sonicEl.style.backgroundImage = "url('prota.jfif')";
+
+    // Reseta a máquina de estados do inimigo ao estado inicial
+    enemyState = 'PATROL';
+    patrolDir = 1;
+    patrolTimer = 0;
+    attackCooldown = 0;
 }
 
 function updateSonicPosition() {
@@ -324,6 +356,10 @@ function collectCoin() {
     }
 
     phaseIndex++;
+
+    // Feedback visual: mostra "⚡ VELOCIDADE +" sobre o Robotnik
+    showSpeedUpEffect();
+
     maxStepReached = 0;
     timeLeft = LEVEL_TIME;
     buildWorld();
@@ -374,24 +410,99 @@ function spawnEnemyFarFromSonic() {
     }
 }
 
+// ========== MÁQUINA DE ESTADOS DO INIMIGO ==========
+//
+// Pergunta 1 (Professor): Como o inimigo identifica a posição do jogador?
+//   → Calcula os centros de Sonic e Robotnik e usa Math.hypot() para obter
+//     a distância euclidiana entre eles. Isso é mais preciso que distância
+//     Manhattan porque considera a diagonal.
+//
+// Pergunta 2 (Professor): Quais decisões o algoritmo toma?
+//   → Usa uma máquina de 3 estados com transições baseadas na distância:
+//     PATROL: patrulha horizontal quando longe (> 500px)
+//     CHASE:  perseguição direta quando em alcance médio (200-500px)
+//     ATTACK: investida rápida quando perto (< 200px) com cooldown
+//
+// Pergunta 3 (Professor): Quais variáveis são necessárias?
+//   → enemyState, patrolDir, patrolTimer, attackCooldown
+//   → enemy.x, enemy.y, currentPhase().enemySpeed, sonicX, sonicY, jumpY
+//
 function updateEnemy(timeScale) {
     if (!gameActive) return;
 
+    // --- Passo 1: Calcular centros dos personagens ---
     const sonicCenterX = sonicX + (SONIC_SIZE / 2);
     const sonicCenterY = sonicY + jumpY + (SONIC_SIZE / 2);
-    const hoverDirection = sonicCenterX < GAME_WIDTH - 340 ? 1 : -1;
-    const targetX = sonicCenterX + (hoverDirection * 210) - (enemy.width / 2);
-    const targetY = clamp(sonicCenterY + 280, 420, GAME_HEIGHT - enemy.height - 35);
-    const deltaX = targetX - enemy.x;
-    const deltaY = targetY - enemy.y;
+    const enemyCenterX = enemy.x + (enemy.width / 2);
+    const enemyCenterY = enemy.y + (enemy.height / 2);
+
+    // --- Passo 2: Calcular distância euclidiana ---
+    const deltaX = sonicCenterX - enemyCenterX;
+    const deltaY = sonicCenterY - enemyCenterY;
     const distance = Math.hypot(deltaX, deltaY);
 
-    if (distance > 1) {
-        const speed = currentPhase().enemySpeed * timeScale;
-        enemy.x += (deltaX / distance) * speed;
-        enemy.y += (deltaY / distance) * speed;
+    // --- Passo 3: Determinar o estado atual com base na distância ---
+    // Transições: distância > 500 → PATROL | 200-500 → CHASE | < 200 → ATTACK
+    if (distance > 500) {
+        enemyState = 'PATROL';
+    } else if (distance >= 200) {
+        enemyState = 'CHASE';
+    } else {
+        enemyState = 'ATTACK';
     }
 
+    // Velocidade base definida pela fase atual (cresce a cada fase)
+    const baseSpeed = currentPhase().enemySpeed * timeScale;
+
+    // --- Passo 4: Executar comportamento de acordo com o estado ---
+    switch (enemyState) {
+
+        case 'PATROL':
+            // Patrulha horizontal: anda de um lado para o outro
+            // Inverte direção a cada ~120 frames para cobrir a área
+            patrolTimer += timeScale;
+            if (patrolTimer > 120) {
+                patrolDir *= -1;
+                patrolTimer = 0;
+            }
+            enemy.x += patrolDir * baseSpeed;
+
+            // Leve oscilação vertical para parecer "voando"
+            enemy.y += Math.sin(patrolTimer * 0.1) * 0.5 * timeScale;
+            break;
+
+        case 'CHASE':
+            // Perseguição direta: segue o Sonic com velocidade normal
+            // Normaliza o vetor direção (deltaX/distance) para mover em qualquer ângulo
+            if (distance > 1) {
+                enemy.x += (deltaX / distance) * baseSpeed;
+                enemy.y += (deltaY / distance) * baseSpeed;
+            }
+            break;
+
+        case 'ATTACK':
+            // Investida rápida com cooldown de 1.2 segundos
+            if (attackCooldown <= 0) {
+                // Investida: velocidade × 1.8 na direção do Sonic
+                if (distance > 1) {
+                    const attackSpeed = baseSpeed * 1.8;
+                    enemy.x += (deltaX / distance) * attackSpeed;
+                    enemy.y += (deltaY / distance) * attackSpeed;
+                }
+                // Após cada investida, ativa cooldown (~1.2s = 72 frames a 60fps)
+                attackCooldown = 72;
+            } else {
+                // Durante o cooldown, recua levemente para dar chance ao jogador
+                attackCooldown -= timeScale;
+                if (distance > 1) {
+                    enemy.x -= (deltaX / distance) * baseSpeed * 0.3;
+                    enemy.y -= (deltaY / distance) * baseSpeed * 0.3;
+                }
+            }
+            break;
+    }
+
+    // --- Passo 5: Manter inimigo dentro dos limites do mapa ---
     enemy.x = clamp(enemy.x, 0, GAME_WIDTH - enemy.width);
     enemy.y = clamp(enemy.y, 35, GAME_HEIGHT - enemy.height);
     updateEnemyPosition();
@@ -469,6 +580,26 @@ function clearBlasterShots() {
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(value, max));
+}
+
+// ========== Feedback Visual de Velocidade ==========
+// Cria um popup animado "⚡ VELOCIDADE +" que aparece sobre o Robotnik
+// sempre que o jogador avança de fase, indicando que o inimigo ficou mais rápido.
+function showSpeedUpEffect() {
+    const popup = document.createElement('div');
+    popup.className = 'speed-up-popup';
+    popup.textContent = '⚡ VELOCIDADE +';
+
+    // Posiciona acima do Robotnik
+    popup.style.left = enemy.x + 'px';
+    popup.style.bottom = (enemy.y + enemy.height + 10) + 'px';
+
+    gameContainer.appendChild(popup);
+
+    // Remove o elemento do DOM quando a animação terminar (1.5s)
+    popup.addEventListener('animationend', () => {
+        if (popup.parentNode) popup.parentNode.removeChild(popup);
+    });
 }
 
 function boxesOverlap(a, b) {
@@ -660,7 +791,52 @@ window.onload = () => {
     startScreen.style.display = 'flex';
     endScreen.style.display = 'none';
     resizeGame();
+    initTouchControls();
 };
+
+// ========== Controles Touch para Mobile ==========
+// Detecta dispositivos com tela sensível ao toque e exibe botões de controle.
+// Cada botão simula o pressionamento/liberação de uma tecla no objeto global `keys`,
+// permitindo que o gameLoop (via handleMovement) funcione sem alterações.
+function initTouchControls() {
+    const touchControls = document.getElementById('touch-controls');
+    if (!touchControls) return;
+
+    // Detecta se é um dispositivo touch (celular/tablet)
+    if ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches) {
+        touchControls.style.display = 'flex';
+    }
+
+    // Mapeia cada botão para a tecla correspondente
+    const mapping = {
+        'touch-left': 'arrowleft',
+        'touch-right': 'arrowright',
+        'touch-jump': 'arrowup'
+    };
+
+    Object.entries(mapping).forEach(([btnId, keyName]) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+
+        // touchstart → simula tecla pressionada
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Previne scrolling da página
+            keys[keyName] = true;
+        }, { passive: false });
+
+        // touchend → simula tecla liberada
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys[keyName] = false;
+        }, { passive: false });
+
+        // touchcancel → garante que a tecla seja liberada se o touch for cancelado
+        btn.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            keys[keyName] = false;
+        }, { passive: false });
+    });
+}
 
 function resizeGame() {
     const wrapper = document.getElementById('game-wrapper');

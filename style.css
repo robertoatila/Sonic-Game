@@ -61,6 +61,14 @@ body {
     border-color: #8e44ad;
 }
 
+/* ========== FASE 3 — Overlay vermelho-escuro sobre background2.jpg ==========
+   Usa o mesmo background da fase 2, mas com overlay mais agressivo
+   e borda vermelha para reforçar a sensação de perigo */
+#game-container.phase-3 {
+    background-image: linear-gradient(rgba(180, 20, 20, 0.35), rgba(30, 5, 5, 0.50)), url('background2.jpg');
+    border-color: #e74c3c;
+}
+
 .degrau {
     position: absolute;
     background-color: #654321; /* Cor de terra */
@@ -244,6 +252,24 @@ body {
     to { opacity: 1; }
 }
 
+/* ========== Feedback Visual: Popup "⚡ VELOCIDADE +" ========== */
+.speed-up-popup {
+    position: absolute;
+    color: #ff4500;
+    font-weight: 900;
+    font-size: 18px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 30;
+    text-shadow: 0 0 8px rgba(255,100,0,0.8);
+    animation: speedPopup 1.5s ease-out forwards;
+}
+
+@keyframes speedPopup {
+    0%   { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-60px); opacity: 0; }
+}
+
 /* Telas de Overlay (Início e Fim) */
 .overlay {
     position: absolute;
@@ -306,7 +332,7 @@ button {
     font-size: 26px;
     font-weight: bold;
     color: white;
-    background: #2ecc71;
+    background: #15803d;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -328,4 +354,48 @@ button:hover {
 #end-screen p {
     font-size: 28px;
     margin-bottom: 30px;
+}
+
+/* ========== Controles Touch para Mobile ========== */
+#touch-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: none;  /* Habilitado via JS em dispositivos touch */
+    gap: 12px;
+    z-index: 60;
+    align-items: center;
+}
+
+.touch-btn {
+    width: 65px;
+    height: 65px;
+    padding: 0;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.touch-btn:active {
+    background: rgba(0, 0, 0, 0.65);
+    transform: scale(0.92);
+}
+
+/* Em dispositivos touch, o CSS também pode forçar a exibição */
+@media (pointer: coarse) {
+    #touch-controls {
+        display: flex;
+    }
 }
