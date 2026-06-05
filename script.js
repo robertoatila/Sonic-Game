@@ -21,6 +21,11 @@ const ENEMY_WIDTH = 72;
 const ENEMY_HEIGHT = 72;
 const BLASTER_WIDTH = 34;
 const BLASTER_HEIGHT = 10;
+const FINAL_COIN_X = ((STEP_COUNT - 1) * STEP_WIDTH) + (STEP_WIDTH / 2) - (COIN_SIZE / 2);
+const ENEMY_COIN_GAP = 35;
+const ENEMY_RIGHT_PATROL_MIN_X = 700;
+const ENEMY_RIGHT_PATROL_MAX_X = FINAL_COIN_X - ENEMY_WIDTH - ENEMY_COIN_GAP;
+const ENEMY_RIGHT_PATROL_Y = 520;
 
 const PHASES = [
     {
@@ -28,11 +33,11 @@ const PHASES = [
         cssClass: 'phase-1',
         spikeSteps: [3, 6],
         enemyMode: 'patrol',
-        enemyCanDamage: false,
-        enemyCanShoot: false,
-        enemyPatrolMinX: 40,
-        enemyPatrolMaxX: 760,
-        enemyPatrolY: 520,
+        enemyCanDamage: true,
+        enemyCanShoot: true,
+        enemyPatrolMinX: ENEMY_RIGHT_PATROL_MIN_X,
+        enemyPatrolMaxX: ENEMY_RIGHT_PATROL_MAX_X,
+        enemyPatrolY: ENEMY_RIGHT_PATROL_Y,
         enemySpeed: 1.25,
         blasterSpeed: 2.4,
         blasterCooldown: 3000,
@@ -43,12 +48,12 @@ const PHASES = [
         number: 2,
         cssClass: 'phase-2',
         spikeSteps: [2, 4, 6],
-        enemyMode: 'smart',
+        enemyMode: 'patrol',
         enemyCanDamage: true,
         enemyCanShoot: true,
-        enemyPatrolMinX: 0,
-        enemyPatrolMaxX: GAME_WIDTH - ENEMY_WIDTH,
-        enemyPatrolY: GAME_HEIGHT - ENEMY_HEIGHT - 70,
+        enemyPatrolMinX: ENEMY_RIGHT_PATROL_MIN_X,
+        enemyPatrolMaxX: ENEMY_RIGHT_PATROL_MAX_X,
+        enemyPatrolY: ENEMY_RIGHT_PATROL_Y,
         enemySpeed: 2,
         blasterSpeed: 3.1,
         blasterCooldown: 3000,
@@ -422,9 +427,9 @@ function spawnEnemyFarFromSonic() {
     const phase = currentPhase();
 
     if (phase.enemyMode === 'patrol') {
-        enemy.x = phase.enemyPatrolMinX;
+        enemy.x = phase.enemyPatrolMaxX;
         enemy.y = phase.enemyPatrolY;
-        patrolDir = 1;
+        patrolDir = -1;
         return;
     }
 
