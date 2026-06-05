@@ -21,7 +21,7 @@ Projeto didatico de jogo de plataformas feito com **HTML5, CSS3 e JavaScript Van
 
 ### Robotnik no ceu e tiros de blaster
 
-Em todas as fases, Robotnik nasce pelo lado direito e usa uma patrulha aerea simples entre `x=760` e `x=930`, em `y=650`. Ele dispara blaster e tira vida ao tocar no Sonic, mas nao fica em cima dos degraus nem da moeda.
+Em todas as fases, Robotnik nasce pelo lado direito e usa uma patrulha aerea simples entre o meio da tela (`x=564`) e o lado direito (`x=930`), em `y=650`. Ele dispara blaster e tira vida ao tocar no Sonic, mas nao fica em cima dos degraus nem da moeda.
 
 Para disparar, Robotnik identifica a posicao do Sonic usando o centro do personagem como alvo:
 
