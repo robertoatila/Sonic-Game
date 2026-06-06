@@ -75,7 +75,7 @@ const PHASES = [
         enemyPatrolMaxX: ENEMY_SKY_PATROL_MAX_X,
         enemyPatrolY: ENEMY_SKY_PATROL_Y,
         enemySpeed: 3.2,                 // velocidade do Robotnik 2.56× a da fase 1
-        blasterSpeed: 4.0,               // projétil mais rápido
+        blasterSpeed: 4,               // projétil mais rápido
         blasterCooldown: 1800,           // dispara a cada 1.8s (era 3s)
         spikeToggleInterval: 700,        // espinhos alternam a cada 0.7s
         message: 'FASE FINAL! Robotnik está furioso!'
@@ -503,9 +503,7 @@ function shootBlaster() {
 
 function removeBlasterShot(index) {
     const shot = blasterShots[index];
-    if (shot && shot.el.parentNode) {
-        shot.el.parentNode.removeChild(shot.el);
-    }
+    shot?.el?.remove();
     blasterShots.splice(index, 1);
 }
 
@@ -535,7 +533,7 @@ function showSpeedUpEffect() {
 
     // Remove o elemento do DOM quando a animação terminar (1.5s)
     popup.addEventListener('animationend', () => {
-        if (popup.parentNode) popup.parentNode.removeChild(popup);
+        popup.remove();
     });
 }
 
@@ -546,10 +544,57 @@ function boxesOverlap(a, b) {
         a.y + a.height > b.y;
 }
 
+function checkCoinCollision(sonicBounds) {
+    if (coinBounds && currentStep === STEP_COUNT - 1 && boxesOverlap(sonicBounds, coinBounds)) {
+        collectCoin();
+        return true;
+    }
+    return false;
+}
+
+function checkObstacleCollisions(sonicBounds) {
+    for (const obs of obstacles) {
+        if (obs.active && boxesOverlap(sonicBounds, obs)) {
+            handleDamage('Você tocou em um espinho mortal!');
+            return true;
+        }
+    }
+    return false;
+}
+
+function checkEnemyCollision(sonicBounds, phase) {
+    if (!phase.enemyCanDamage) return false;
+
+    const enemyBounds = {
+        x: enemy.x + 10,
+        y: enemy.y + 8,
+        width: enemy.width - 20,
+        height: enemy.height - 16
+    };
+
+    if (boxesOverlap(sonicBounds, enemyBounds)) {
+        handleDamage('Você encostou no Robotnik!');
+        return true;
+    }
+    return false;
+}
+
+function checkBlasterCollisions(sonicBounds, phase) {
+    if (!phase.enemyCanShoot) return false;
+
+    for (let i = blasterShots.length - 1; i >= 0; i--) {
+        if (boxesOverlap(sonicBounds, blasterShots[i])) {
+            removeBlasterShot(i);
+            handleDamage('Você foi atingido pelo blaster do Robotnik!');
+            return true;
+        }
+    }
+    return false;
+}
+
 function checkCollisions() {
     if (!gameActive) return;
 
-    const phase = currentPhase();
     const sonicBounds = {
         x: sonicX,
         y: sonicY + jumpY,
@@ -557,44 +602,13 @@ function checkCollisions() {
         height: SONIC_SIZE
     };
 
-    if (coinBounds && currentStep === STEP_COUNT - 1 && boxesOverlap(sonicBounds, coinBounds)) {
-        collectCoin();
-        return;
-    }
-
+    if (checkCoinCollision(sonicBounds)) return;
     if (isInvulnerable) return;
 
-    for (let i = 0; i < obstacles.length; i++) {
-        const obs = obstacles[i];
-        if (obs.active && boxesOverlap(sonicBounds, obs)) {
-            handleDamage('Você tocou em um espinho mortal!');
-            return;
-        }
-    }
-
-    if (phase.enemyCanDamage) {
-        const enemyBounds = {
-            x: enemy.x + 10,
-            y: enemy.y + 8,
-            width: enemy.width - 20,
-            height: enemy.height - 16
-        };
-
-        if (boxesOverlap(sonicBounds, enemyBounds)) {
-            handleDamage('Você encostou no Robotnik!');
-            return;
-        }
-    }
-
-    if (phase.enemyCanShoot) {
-        for (let i = blasterShots.length - 1; i >= 0; i--) {
-            if (boxesOverlap(sonicBounds, blasterShots[i])) {
-                removeBlasterShot(i);
-                handleDamage('Você foi atingido pelo blaster do Robotnik!');
-                return;
-            }
-        }
-    }
+    const phase = currentPhase();
+    if (checkObstacleCollisions(sonicBounds)) return;
+    if (checkEnemyCollision(sonicBounds, phase)) return;
+    if (checkBlasterCollisions(sonicBounds, phase)) return;
 }
 
 document.addEventListener('keydown', (e) => {
@@ -629,92 +643,115 @@ function gameLoop(timestamp) {
     animationFrameId = requestAnimationFrame(gameLoop);
 }
 
+function moveRight(timeScale) {
+    const stepMaxX = (currentStep * STEP_WIDTH) + STEP_WIDTH - SONIC_SIZE;
+    sonicX += 6 * timeScale;
+
+    if (sonicX > stepMaxX) {
+        if (isJumping && jumpY >= 60 && currentStep < STEP_COUNT - 1) {
+            currentStep++;
+            sonicY += STEP_HEIGHT;
+            jumpY -= STEP_HEIGHT;
+            addStepScore();
+        } else {
+            sonicX = stepMaxX;
+        }
+    }
+}
+
+function moveLeft(timeScale) {
+    const stepMinX = currentStep * STEP_WIDTH;
+    sonicX -= 6 * timeScale;
+
+    if (sonicX < stepMinX) {
+        if (currentStep > 0) {
+            currentStep--;
+            sonicY -= STEP_HEIGHT;
+            jumpY += STEP_HEIGHT;
+
+            if (!isJumping) {
+                isJumping = true;
+                jumpVelocity = 0;
+                sonicEl.style.backgroundImage = "url('jump.png')";
+            }
+        } else {
+            sonicX = stepMinX;
+        }
+    }
+}
+
+function handleHorizontalMovement(timeScale) {
+    if (keys['arrowright'] || keys['d'] || keys['KeyD']) {
+        moveRight(timeScale);
+    }
+
+    if (keys['arrowleft'] || keys['a'] || keys['KeyA']) {
+        moveLeft(timeScale);
+    }
+}
+
+function handleJumpOrClimbStart() {
+    if ((keys['arrowup'] || keys['w'] || keys[' '] || keys['Space'] || keys['KeyW']) && !isJumping) {
+        const stepMaxX = (currentStep * STEP_WIDTH) + STEP_WIDTH - SONIC_SIZE;
+        const isHoldingLeft = keys['arrowleft'] || keys['a'] || keys['KeyA'];
+
+        if (sonicX >= stepMaxX - 5 && !isHoldingLeft && currentStep < STEP_COUNT - 1) {
+            isClimbing = true;
+            climbProgress = 0;
+            startX = sonicX;
+            targetX = (currentStep + 1) * STEP_WIDTH + 10;
+            diffX = targetX - startX;
+            sonicEl.style.backgroundImage = "url('jump.png')";
+        } else {
+            isJumping = true;
+            jumpVelocity = 14;
+            sonicEl.style.backgroundImage = "url('jump.png')";
+        }
+    }
+}
+
+function handleJumpingPhysics(timeScale) {
+    jumpY += jumpVelocity * timeScale;
+    jumpVelocity += gravity * timeScale;
+
+    if (jumpY <= 0) {
+        jumpY = 0;
+        isJumping = false;
+        sonicEl.style.backgroundImage = "url('prota.jfif')";
+    }
+}
+
+function handleClimbingPhysics(timeScale) {
+    climbProgress += 0.033 * timeScale;
+    if (climbProgress > 1) climbProgress = 1;
+
+    const t = climbProgress;
+    sonicX = startX + (diffX * t);
+    jumpY = -330 * t * t + 405 * t;
+
+    if (climbProgress >= 1) {
+        isClimbing = false;
+        jumpY = 0;
+        sonicY += STEP_HEIGHT;
+        currentStep++;
+        sonicX = targetX;
+        addStepScore();
+        sonicEl.style.backgroundImage = "url('prota.jfif')";
+    }
+}
+
 function handleMovement(timeScale) {
     if (!isClimbing) {
-        if (keys['arrowright'] || keys['d'] || keys['KeyD']) {
-            const stepMaxX = (currentStep * STEP_WIDTH) + STEP_WIDTH - SONIC_SIZE;
-            sonicX += 6 * timeScale;
-
-            if (sonicX > stepMaxX) {
-                if (isJumping && jumpY >= 60 && currentStep < STEP_COUNT - 1) {
-                    currentStep++;
-                    sonicY += STEP_HEIGHT;
-                    jumpY -= STEP_HEIGHT;
-                    addStepScore();
-                } else {
-                    sonicX = stepMaxX;
-                }
-            }
-        }
-
-        if (keys['arrowleft'] || keys['a'] || keys['KeyA']) {
-            const stepMinX = currentStep * STEP_WIDTH;
-            sonicX -= 6 * timeScale;
-
-            if (sonicX < stepMinX) {
-                if (currentStep > 0) {
-                    currentStep--;
-                    sonicY -= STEP_HEIGHT;
-                    jumpY += STEP_HEIGHT;
-
-                    if (!isJumping) {
-                        isJumping = true;
-                        jumpVelocity = 0;
-                        sonicEl.style.backgroundImage = "url('jump.png')";
-                    }
-                } else {
-                    sonicX = stepMinX;
-                }
-            }
-        }
-
-        if ((keys['arrowup'] || keys['w'] || keys[' '] || keys['Space'] || keys['KeyW']) && !isJumping) {
-            const stepMaxX = (currentStep * STEP_WIDTH) + STEP_WIDTH - SONIC_SIZE;
-            const isHoldingLeft = keys['arrowleft'] || keys['a'] || keys['KeyA'];
-
-            if (sonicX >= stepMaxX - 5 && !isHoldingLeft && currentStep < STEP_COUNT - 1) {
-                isClimbing = true;
-                climbProgress = 0;
-                startX = sonicX;
-                targetX = (currentStep + 1) * STEP_WIDTH + 10;
-                diffX = targetX - startX;
-                sonicEl.style.backgroundImage = "url('jump.png')";
-            } else {
-                isJumping = true;
-                jumpVelocity = 14;
-                sonicEl.style.backgroundImage = "url('jump.png')";
-            }
-        }
+        handleHorizontalMovement(timeScale);
+        handleJumpOrClimbStart();
     }
 
     if (isJumping && !isClimbing) {
-        jumpY += jumpVelocity * timeScale;
-        jumpVelocity += gravity * timeScale;
-
-        if (jumpY <= 0) {
-            jumpY = 0;
-            isJumping = false;
-            sonicEl.style.backgroundImage = "url('prota.jfif')";
-        }
+        handleJumpingPhysics(timeScale);
     }
 
     if (isClimbing) {
-        climbProgress += 0.033 * timeScale;
-        if (climbProgress > 1) climbProgress = 1;
-
-        const t = climbProgress;
-        sonicX = startX + (diffX * t);
-        jumpY = -330 * t * t + 405 * t;
-
-        if (climbProgress >= 1) {
-            isClimbing = false;
-            jumpY = 0;
-            sonicY += STEP_HEIGHT;
-            currentStep++;
-            sonicX = targetX;
-            addStepScore();
-            sonicEl.style.backgroundImage = "url('prota.jfif')";
-        }
+        handleClimbingPhysics(timeScale);
     }
 
     updateSonicPosition();
@@ -728,7 +765,7 @@ function addStepScore() {
     }
 }
 
-window.onload = () => {
+globalThis.onload = () => {
     initializeRun();
     startScreen.style.display = 'flex';
     endScreen.style.display = 'none';
@@ -745,7 +782,7 @@ function initTouchControls() {
     if (!touchControls) return;
 
     // Detecta se é um dispositivo touch (celular/tablet)
-    if ('ontouchstart' in window || window.matchMedia('(pointer: coarse)').matches) {
+    if ('ontouchstart' in globalThis || globalThis.matchMedia('(pointer: coarse)').matches) {
         touchControls.style.display = 'flex';
     }
 
@@ -786,11 +823,11 @@ function resizeGame() {
 
     const baseWidth = 1250;
     const baseHeight = 850;
-    const scaleX = window.innerWidth / baseWidth;
-    const scaleY = window.innerHeight / baseHeight;
+    const scaleX = globalThis.innerWidth / baseWidth;
+    const scaleY = globalThis.innerHeight / baseHeight;
     const scale = Math.min(scaleX, scaleY, 1);
 
     wrapper.style.transform = `scale(${scale})`;
 }
 
-window.addEventListener('resize', resizeGame);
+globalThis.addEventListener('resize', resizeGame);

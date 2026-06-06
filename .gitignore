@@ -1,0 +1,17 @@
+# Agent/local assistant state
+.codex/
+.gemini/
+.agent/
+.claude/
+antigravity/
+
+# Router backups and local scripts
+.skills-backup-*
+.skills-backup-nodup-*
+.skills-router-backup-*
+.skills-router-backup-universal-*
+.router-cleanup-backup-*
+*.bak
+*.backup
+*.old
+instalar-routers*.bat

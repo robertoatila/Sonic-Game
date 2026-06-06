@@ -4,20 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonic e as Escadas - Projeto Didático</title>
+    <meta name="description" content="Sonic e as Escadas — um jogo de plataforma didático com 3 fases, espinhos, moedas e o Robotnik como inimigo.">
+    <title>Sonic e as Escadas — Projeto Didático</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
     <div id="game-wrapper">
-        <!-- HUD de Interface (Sempre visível, mas só roda após start) -->
-        <div class="hud">
-            <div>Pontos: <span id="score" style="color: #f1c40f;">0</span></div>
-            <div>Tempo: <span id="time" style="color: #e74c3c;">40</span>s</div>
-            <div>Fase: <span id="phase" style="color: #64d2ff;">1</span></div>
-            <div>Vidas: <span id="lives" style="color: #2ecc71;">4</span></div>
-        </div>
+
+        <!-- Título estilizado acima do jogo -->
+        <h1 class="game-title">
+            <span class="title-ring">🟡</span>
+            Sonic e as Escadas
+            <span class="title-ring">🟡</span>
+        </h1>
+
+        <!-- HUD de Interface -->
+        <output class="hud" aria-label="Informações do jogo">
+            <div class="hud-item hud-score">
+                <span class="hud-icon">⭐</span>
+                <span class="hud-label">Pontos</span>
+                <span id="score" class="hud-value hud-value--gold">0</span>
+            </div>
+            <div class="hud-item hud-time">
+                <span class="hud-icon">⏱️</span>
+                <span class="hud-label">Tempo</span>
+                <span id="time" class="hud-value hud-value--red">40</span>
+                <span class="hud-unit">s</span>
+            </div>
+            <div class="hud-item hud-phase">
+                <span class="hud-icon">🏁</span>
+                <span class="hud-label">Fase</span>
+                <span id="phase" class="hud-value hud-value--blue">1</span>
+            </div>
+            <div class="hud-item hud-lives">
+                <span class="hud-icon">💙</span>
+                <span class="hud-label">Vidas</span>
+                <span id="lives" class="hud-value hud-value--green">4</span>
+            </div>
+        </output>
 
         <div id="game-container" class="phase-1">
 
@@ -28,32 +57,81 @@
 
             <!-- Tela Inicial Overlay -->
             <div id="start-screen" class="overlay">
-                <h2>Sonic e as Escadas</h2>
-                <div class="instructions-box">
-                    <h3>Regras e Instruções</h3>
-                    <p><strong>Regra de Subida:</strong> Só é possível subir um degrau da escada pulando quando você
-                        estiver na borda direita do degrau atual. Você não pode subir simplesmente correndo contra a
-                        parede.</p>
-                    <p><strong>Objetivo:</strong> Colete a moeda de cada fase para avançar. São 3 fases com dificuldade
-                        crescente — vença todas para completar o jogo!</p>
-                    <p><strong>Desafio:</strong> Você tem 4 vidas e 40 segundos por fase. Robotnik vem da direita,
-                        patrulha, dispara blaster e encostar nele ou no tiro retira uma vida. Na fase final, ele fica
-                        mais rápido.</p>
-                    <p><strong>Controles:</strong></p>
-                    <ul>
-                        <li><strong>Pulo/Subir:</strong> W, Seta para Cima ou Espaço</li>
-                        <li><strong>Andar para Direita:</strong> D ou Seta Direita</li>
-                        <li><strong>Andar para Esquerda:</strong> A ou Seta Esquerda</li>
-                    </ul>
+                <div class="overlay-content">
+                    <h2 class="screen-title screen-title--start">
+                        <span class="title-icon">🦔</span>
+                        Sonic e as Escadas
+                    </h2>
+                    <p class="screen-subtitle">Projeto Didático de Plataforma</p>
+
+                    <div class="instructions-box">
+                        <h3>
+                            <span class="section-icon">📜</span>
+                            Regras e Instruções
+                        </h3>
+
+                        <div class="instruction-card">
+                            <div class="instruction-badge badge-climb">🧗</div>
+                            <div>
+                                <strong>Regra de Subida:</strong> Só é possível subir um degrau da escada pulando quando
+                                você estiver na borda direita do degrau atual. Você não pode subir simplesmente correndo
+                                contra a parede.
+                            </div>
+                        </div>
+
+                        <div class="instruction-card">
+                            <div class="instruction-badge badge-goal">🪙</div>
+                            <div>
+                                <strong>Objetivo:</strong> Colete a moeda de cada fase para avançar. São 3 fases com
+                                dificuldade crescente — vença todas para completar o jogo!
+                            </div>
+                        </div>
+
+                        <div class="instruction-card">
+                            <div class="instruction-badge badge-danger">⚠️</div>
+                            <div>
+                                <strong>Desafio:</strong> Você tem 4 vidas e 40 segundos por fase. Robotnik vem da
+                                direita, patrulha, dispara blaster e encostar nele ou no tiro retira uma vida. Na fase
+                                final, ele fica mais rápido.
+                            </div>
+                        </div>
+
+                        <div class="controls-section">
+                            <h4>🎮 Controles</h4>
+                            <div class="controls-grid">
+                                <div class="control-key">
+                                    <kbd>W</kbd> <kbd>↑</kbd> <kbd>Espaço</kbd>
+                                    <span>Pulo / Subir</span>
+                                </div>
+                                <div class="control-key">
+                                    <kbd>D</kbd> <kbd>→</kbd>
+                                    <span>Andar para Direita</span>
+                                </div>
+                                <div class="control-key">
+                                    <kbd>A</kbd> <kbd>←</kbd>
+                                    <span>Andar para Esquerda</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-start" onclick="startGame()">
+                        <span class="btn-icon">▶</span>
+                        Começar Jogo
+                    </button>
                 </div>
-                <button id="btn-start" onclick="startGame()">Começar Jogo</button>
             </div>
 
             <!-- Tela de Fim de Jogo Overlay -->
             <div id="end-screen" class="overlay" style="display: none;">
-                <h2 id="end-title" aria-label="Resultado do jogo">&#8203;</h2>
-                <p id="end-message"></p>
-                <button onclick="resetToStart()">Jogar Novamente</button>
+                <div class="overlay-content">
+                    <h2 id="end-title" class="screen-title" aria-label="Resultado do jogo">&#8203;</h2>
+                    <p id="end-message" class="end-message-text"></p>
+                    <button onclick="resetToStart()">
+                        <span class="btn-icon">🔄</span>
+                        Jogar Novamente
+                    </button>
+                </div>
             </div>
 
             <!-- Controles Touch para Mobile -->
@@ -64,6 +142,9 @@
             </div>
 
         </div>
+
+        <!-- Rodapé informativo -->
+        <p class="game-footer">Pressione <kbd>Espaço</kbd> para pular · Colete as moedas · Desvie do Robotnik</p>
     </div>
 
     <script src="script.js"></script>
